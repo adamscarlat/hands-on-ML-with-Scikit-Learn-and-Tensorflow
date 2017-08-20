@@ -85,14 +85,15 @@ def stratified_split(data, column_name, cap_max):
 
     #print proportions of the discretized and capped column.
     #test and train sets should have similar proportions
-    print ('proportions in the data')
-    print (data[column_name_cat].value_counts() / len(data))
+    #print ('proportions in the data')
+    #print (data[column_name_cat].value_counts() / len(data))
 
     #clean up the modified column
     for set in (strat_train_set, strat_test_set): 
         set.drop([column_name_cat], axis=1, inplace=True)
 
     return strat_train_set, strat_test_set
+
 
 if __name__ == '__main__':
     fetch_data(HOUSING_URL, HOUSING_PATH, 'housing.tgz')
