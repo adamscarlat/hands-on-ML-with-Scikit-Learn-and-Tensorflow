@@ -13,9 +13,9 @@ def apply_label_encoding(X: DataFrame):
 
   return transformed_df
 
-model: Pipeline = joblib.load("heart_disease_model.pkl")
+model: Pipeline = joblib.load("projects/heart-attack-dataset/heart_disease_model.pkl")
 
-data = pd.read_csv("./data/heart.csv")
+data = pd.read_csv("projects/heart-attack-dataset/data/heart.csv")
 data_no_label = data.drop("HeartDisease", axis=1)
 labels = data["HeartDisease"]
 
@@ -26,5 +26,7 @@ labels_n_samples = list(labels[:n])
 predictions = list(model.predict(data_no_label_5_samples))
 
 print (accuracy_score(labels_n_samples, predictions))
+
+print (predictions)
 
 
