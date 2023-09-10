@@ -27,6 +27,4 @@ predictions = list(model.predict(data_no_label_5_samples))
 
 print (accuracy_score(labels_n_samples, predictions))
 
-# print ("Predictions: ", predictions)
-# print ("Actuals:     ", labels_n_samples)
 
