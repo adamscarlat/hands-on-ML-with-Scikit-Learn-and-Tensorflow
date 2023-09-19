@@ -15,11 +15,11 @@ Linear Regression
 
 * Same equation in vectorized form:
   ```js
-  yi^ = h(Xv) = Pv . Xi
+  yi^ = h(Xv) = Pv @ Xi
   ```
   - Pv is a parameter vector containing [p0, p1, ... , pn]
   - Xi is a feature vector containing [x0, x1, ... , xn] of the ith training instance
-  - Pv . Xi is the dot product of the two vectors
+  - Pv @ Xi is the dot product of the two vectors
 
 * The goal of model training is finding the best parameters Pv that minimize the error between ALL Y^ and Y.
   - We capture the error between Y^ and Y using a cost function 
@@ -29,7 +29,7 @@ Linear Regression
 
 * Example for a cost function for a linear regression model - Mean Squared Error (MSE)
   ```js
-  MSE(X, h) = (1/m) * sum(P . Xi - yi)^2
+  MSE(X, h) = (1/m) * sum(P @ Xi - yi)^2
   ```
   - Xi is the feature vector of sample i
   - yi is the actual label of sample i
@@ -38,20 +38,20 @@ Linear Regression
 Linear Regression - The Normal Equation
 ----------------------------------------
 * This is a closed-form approach to find the set of P that minimizes MSE:
-  P = (Xt . X)^-1 . (Xt . y)
+  P = (Xt @ X)^-1 . (Xt . y)
   - Xt is the transpose of X
   - The shape of P at the end will equal the number of columns in X:
     * X.shape  ->    (m,n)
     * Xt.shape ->    (n,m)
     * y.shape  ->    (m,1)
-    * [(n,m) . (m,n)] . [(n,m) . (m,1)] = (n,n) . (n,1) = (n,1)
+    * [(n,m) . (m,n)] @ [(n,m) . (m,1)] = (n,n) @ (n,1) = (n,1)
 
 * The normal equations will not work if the matrix X is not invertible (e.g m < n, less examples than features - wide matrix),
   or if some features are redundant (see matrix inversion rules).
   - Libraries use pseudoinverse of matrices which always exists
 
 * Computational complexity
-  - The (Xt . X) operation is a matrix multiplication with worst case of O(n^3) or  O(n^2.4) where n is the number of 
+  - The (Xt @ X) operation is a matrix multiplication with worst case of O(n^3) or  O(n^2.4) where n is the number of 
     columns (features).
   - The inverse of the matrix is done using SVD which is an O(n^2) operation
   - Notice that the complexity has a non-linear proportion to the number of features but is linearly proportional to the
@@ -304,7 +304,7 @@ Logistic Regression
   features and the weights, but instead of outputting the result directly like the lin reg models, it outputs
   the logistic of this result:
   ```js
-  p = h(x) = logit(Pv . X)
+  p = h(x) = logit(Pv @ X)
   ```
   - logit is a function which outputs a number between 0 and 1:
   ```js
@@ -345,28 +345,38 @@ Softmax Regression
 * Or we can use the softmax function to support multiple labels directly. The way it works:
   - Given an example x, we compute the score with respect to each class k.
     * Each class k has its own parameter vector Pk
-    * For each parameter vector for each class k, we compute sk(x), a scalar value. Together we get a vector with the 
-      score that the instance belongs to each class:
+      - Since each class gets a parameter vector Pk, we get a parameter matrix with dimensions (k,n) where k
+        equals to the number of classes and n to the number of features.
+      - This means that our labels need to become one-hot encoded so that we can compute the error per class
+    * During the forward pass, we compute `Sk(x)`:
       ```js
-      sk(x) = Pk . x
+      Sk(x) = Pk @ x      
       ```
-      - Each class k generates a scalar number sk(x) for instance x. 
-      - Notice that the vector is not probabilities yet. We still need to normalize it and that's what the 
-        softmax function does.
-  - Once we have sk(x) for each class stored in a parameter matrix, we compute the probability that the instance
-    belongs to each class using the softmax function:
-    ```js
-    pk = softmax(Sk(x))
-    ```
-  - The result is a vector with the probability that the instance belongs to each class k.
+      - The result is called logit. Each row will become the probability that an example in X belongs to a certain
+        class.
+      - For example, assume we're dealing with 3 classes and have 4 features
+        * Pk.shape -> (3,4)
+        * x.shape -> (4,m) where m equals to the number of samples
+        * Sk(x).shape -> (3,m) where each row i represents how example i matches a certain class out of the 3
+          (we still need to turn those into probabilities).
+    * Once we have Sk(x) for each class stored in a parameter matrix, we compute the probability that the instance
+      belongs to each class using the softmax function:
+      ```js
+      pk = softmax(Sk(x))
+      ```
+      -  The result is a vector with the probability that the instance belongs to each class k.
+    * Now we take the gradient of the cost function with respect to each parameter:
+      ```js
+      error = pk - y
+      grad = (1/m) * error.T @ X
+      ```
+      - The resulting grad is a matrix with the same shape as Pk and has the weight updates for each parameter. We update
+        the parameters using gradient descent.
 
-* During training, we update the vector Pk for each class using the following cost function:
-  ```js
-  J(P) = -(1/m) sum(sum(yki * log(pki)))
-  ```
-  - P is the matrix containing all vectors Pk.
-  - Inner sum is over the number of classes k
-  - Outer sum is over the number of training instances
+* To predict a new instance, we repeat the forward pass to compute the probabilities and choose the index of the highest
+  probability.
+
+
 
 
 
