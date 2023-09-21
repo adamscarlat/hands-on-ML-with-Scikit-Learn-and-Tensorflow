@@ -1,2 +1,4 @@
 .DS_Store
 edition3/ch2-end-to-end/california_housing_model.pkl
+edition3/projects/topic-modeling/data/authors.csv
+edition3/projects/topic-modeling/data/papers.csv
