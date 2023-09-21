@@ -154,9 +154,23 @@ Polynomial Regression
   - We can add non-linear features by taking the powers of existing features
 
 * The idea is - taking data that is non-linear (e.g you can't fit a straight line onto it) and adding to it 
-  non-linear features (powers of the other features) so that a model can fit a curve to the data.
-  - The model will have to use additional parameters for the non-linear features added. This will cause the 
-    weights to be the coefficients of a polynomial.
+  non-linear features (powers of the other features).
+  * The non-linear features will change the data distribution so that a straight line can separate the data.
+  * For example, assume a 1D line with two classes on it (it's not linearly separable):
+    
+    X---X--X--O--O--O--X--X--X
+
+  * Now we add another feature that is non-linear (e.g. the squared value of the first feature). The data 
+    itself gets the shape of a curve:
+
+    X               X
+      X           X
+        X       X
+          O   O
+            O 
+  
+  * Now we can separate the dataset using a straight line
+    - See page (179) in book for a better picture 
 
 * Assume that you have data where each point matches the following function:
   ```js
