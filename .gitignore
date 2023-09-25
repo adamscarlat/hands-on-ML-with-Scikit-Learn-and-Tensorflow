@@ -2,3 +2,7 @@
 edition3/ch2-end-to-end/california_housing_model.pkl
 edition3/projects/topic-modeling/data/authors.csv
 edition3/projects/topic-modeling/data/papers.csv
+edition3/projects/legal-docs/q-and-a-poc/chunked_court_text.index
+edition3/projects/legal-docs/q-and-a-poc/non_chunked_court_text.index
+edition3/projects/legal-docs/q-and-a-poc/chunked_court_text.index
+edition3/projects/legal-docs/q-and-a-poc/*.index
