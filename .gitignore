@@ -6,3 +6,4 @@ edition3/projects/legal-docs/q-and-a-poc/chunked_court_text.index
 edition3/projects/legal-docs/q-and-a-poc/non_chunked_court_text.index
 edition3/projects/legal-docs/q-and-a-poc/chunked_court_text.index
 edition3/projects/legal-docs/q-and-a-poc/*.index
+edition3/ch8-dim-reduction/mnist.mmap
