@@ -165,5 +165,51 @@ Random Projection
 * sklearn's `GaussianRandomProjection` does exactly that process
   
 
+Locally Linear Embeddings (LLE)
+-------------------------------
+* Non-linear dimensionality reduction technique which does not rely on projections. 
+
+* Good for datasets that resemble twisted manifolds.
+
+* How it works?
+  - Measure how each instance in the dataset relates to its nearest neighbors
+  - Then looks for a low-dimensional representation of the dataset where these relationships 
+    are best preserved.
+
+* How it works (in details)?
+  - For each instance `xi` in the data, LLE finds `k` nearest neighbors (by euclidean distance I assume).
+  - Then it searches for a weight vector `Wi` which will minimize the distance between 
+    `xi` and `sum(wi_j * xj)` over j=1 to m where `wi_j` equals 0 if it's not one of `xi` k-neighbors
+  - This can be described as an optimization problem over the dataset:
+  ```js
+    W = argmin_W sum(x_i - sum(wi_j * xj) for j=1 to m)^2 for i=1 to m
+    
+    subject to, wi_j = 0 if xj is not one of the k neighbors of xi
+    and sum(wi_j) = 1 for i=1 to m
+  ```
+  - At the end of this, we get a weight matrix `W` containing weights for each instance `xi`. If we multiply these weights
+    by the instance's k-nearest neighbors, we'll get an approximation of `xi`
+  - Now we want to map X into a lower dimensional space while preserving the relationships defined in W as much as possible.
+    * If `zi` is the image of `xi` in this lower dimensional space, we want `sum(wi_j * zj)` to be as close as possible to
+      the sum computed with `xi_j`.
+  - To find `zi` (or `Z`) we flip the optimization problem, we keep `W` constant and try to find `Z` which minimizes
+    the squared distance between `zi` and `sum(wi_j * zj)`:
+    ```js
+    Z = argmin_Z sum(zi - sum(wi_j * zj) for j=1 to m) for i=1 to m
+    ```
+    * Notice that we don't have constrained on this optimization. `zj` does not have to be a neighbor of `zi`.
+  - At the end we'll get a matrix `Z` which is an image of `X` in lower dimensional space.
+
+* To summarize the details:
+  - Train a model to find a matrix W in which vector wi represents the weights which approximate the k nearest 
+    neighbors of xi to xi.
+    * Once we have W, we have a transformation from each instances neighbors to the instance itself.
+  - Now we train another model which takes a lower dimensional matrix Z in which the same relationship holds.
+    * We keep W in place and change Z until we find one
+    * Essentially we're doing a search in lower dimensional space for a set of vectors (zi) which hold the same
+      relationship (W) to its neighboring vectors.
+
+* This technique allows for dealing with non-linear datasets. 
+   
 
   
