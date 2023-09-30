@@ -188,5 +188,131 @@ Using clustering for semi-supervised learning
     * Works differently but achieves the same purpose
 
 
-DBSCAN
-------
+Density-based spatial clustering of applications with noise - DBSCAN
+--------------------------------------------------------------------
+* An algorithm that finds clusters by defining regions of high density
+
+* How it works:
+  - Start by finding instances that have neighbor instances within a small (epsilon) distance.
+    * These are called the epsilon neighborhood of the instance.
+  - If the instance has a `min_samples` of neighboring instances in it's epsilon neighborhood it's
+    considered a core instance.
+  - All instances in the neighborhood of a core instance belong to the same cluster. This neighborhood
+    may contain other core instances, all forming a single cluster.
+  - Instances that are not core instances or that do not have one in their neighborhood are considered
+    an anomaly.
+
+* DBSCAN has no predict method, however, we can take its results and train a classification model.
+
+
+Gaussian Mixture Models (GMMs)
+------------------------------
+* A probabilistic model which assumes that instances in the data were generated from a mixture of several
+  Gaussian distributions with unknown parameters.
+  - All instances generated from a single Gaussian distribution form a cluster.
+
+* Covariance matrix 
+  - Calculates the mean distance between any variable to the mean of another variable
+    * In the same way that a distribution of a single independent variable as a standard deviation which 
+      measures the distance between that variable to the mean, a covariance matrix works when there are
+      more than 1 independent variables. 
+    * It measures the distance between each variable to the mean of itself (std) and other variables
+  - For example, assume a multivariate distribution with variables X1 and X2:
+    * We can compute a 2x2 covariance matrix as follows:
+      ```js
+      Cov(X1, X1) = (1/n) * Σ((X1_i - μ_X1)^2)
+      Cov(X2, X2) = (1/n) * Σ((X2_i - μ_X2)^2)
+      Cov(X1, X2) = (1/n) * Σ((X1_i - μ_X) * (X2_i - μ_X2))
+      Cov(X2, X1) = (1/n) * Σ((X2_i - μ_X2) * (X1_i - μ_X1)
+
+      // The covariance matrix
+      Cov(X1, X1), Cov(X1, X2)
+      Cov(X2, X1), Cov(X2, X2)
+      ```
+      - Notice that the diagonal of this matrix is the standard deviation of each variable.
+      - Notice that the non-diagonal cells are a product of the stds of each variable.
+      - The covariance matrix indicates whether the two variables tend to move together or in opposite directions.
+        * A positive covariance of two variables indicates that as one grows the other does as well, a negative
+          covariance indicates the opposite (negative relation).
+
+Simple GMM
+----------
+* In this variant of GMM, the data is assumed to have been generated through this probabilistic process:
+  - Each instance `xi` is assumed to have been sampled from one of `k` gaussian distributions.
+    * The probability to sample `xi` from distribution `j` is the distribution's weight - `wj`.
+  - This distribution has a mean `mj` and a covariance matrix `Cj`. The location of `xi` is sampled 
+    from this distribution as follows - `xi <- (mj, Cj)`
+
+* To use this model, we start by taking a dataset and estimating:
+  - Number of Gaussian distributions k that make up the dataset (defined by user)
+  - Weights of the k distributions (learned by model)
+  - Mean and covariance matrix of the k distributions (learned by model) 
+
+* Once the model fits the data to the k distributions we defined, we can take new instances and get the 
+  probability that they belong to one of the distributions.
+  - This is done by testing the new instance against each of the k distributions:
+  ```js
+  // Bayes theorem
+  P(k | xi) = (P(xi | k) * P(k)) / P(xi)
+  ```
+  - `P(k | xi)` - probability to get distribution k given xi
+  - `P(xi | k)` - probability to get xi given distribution k. To get this we use the PDF of dist k
+  - `P(k)` - probability of dist k, this is the weight of dist k
+  - `P(xi)` - probability to get xi out of all k distributions. Calculated as the sum of `P(data_point | k) * P(k)`
+    over all k.
+
+* Since we're building gaussian distributions, we can also sample new instances from these distributions.
+
+Using GMMs for anomaly detection
+--------------------------------
+* Applying GMMs for anomaly detection is simple, for any instance, we can get the density of the PDF it belongs
+  to at its location.
+
+* We define a density threshold under which an instance is considered an anomaly
+  - For example, 2%. This means that if the instance falls in a density area where only 2% of the instances 
+    fall, it's considered an anomaly
+  - If we get many false positives (model said anomaly and it's not), we can lower the threshold
+  - If we get many false negative (model missed anomalies), we can raise the threshold
+
+* If the data has too many anomalies, the model will try to fit all of them and affect the fit.
+  - To handle this, fit the model once, remove the outliers
+  - Then fit the model again
+  - This can also be used for `novelty detection`. In this technique, we try to understand if an instance is
+    considered novel. 
+    * This type of task assumes that the data has no outliers or that the novel data is different than the 
+      dataset completely (even from the outliers).
+    * For example, detecting a new type of fraud that was never seen before.
+
+Finding the optimal number of clusters when using GMM
+-----------------------------------------------------
+* Unlike knn, we can't use the elbow (average distance of all points to a cluster) or silhouette score (distance
+  between points to own cluster and neighbor cluster). It's unreliable since clusters are not always the same size.
+
+* To get the optimal number of clusters, we can use the BIC calculation:
+  ```js
+  BIC = log(m)*p - 2*log(likelihood_function_max)
+  ```
+  - m: number of instances
+  - p: number of parameters learned by the model
+  - likelihood_function_max: maximized value of the likelihood function
+
+* We compute the BIC of a GMM model for different k values. 
+  - Lower BIC values indicate a better model
+
+* Likelihood vs probability
+  - Probability
+    * How plausible that we get the value x, given a PDF function with known STD and mean
+  - Likelihood
+    * How plausible that we get STD and mean of certain values, given X.
+    * Maximizing the likelihood function means - finding the sets of parameters that give us the maximum
+      likelihood given X.
+  - Summary
+    * Likelihood - how well a particular model or hypothesis explains observed data
+      - Fitting a model to the data.
+    * Probability - how plausible is it that i'll see a certain  result given a known probability distribution 
+      and its parameters
+      - Getting an inference from a given model to a set of observations
+
+
+
+
