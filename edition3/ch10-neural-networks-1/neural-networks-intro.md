@@ -84,4 +84,48 @@ Training MLPs
 
 Regression MLPs
 ---------------
+* Can be used for:
+  - Single value regression 
+    * Single output neuron
+  - Multi value regression
+    * Multiple output neurons
+    * For example, using 5 outputs it can be used to output the center of an image and a bounding box around it.
+
+* MLP regressor allows for the creation of multilayered NNs but is limited in its configurable parameters.
+  - For better NN architecture use Keras.
+
+
+Classification MLPs
+-------------------
+* For binary classification, a single sigmoid output neuron is used.
+  - The output is the probability of the positive class (1-value for the probability of the negative class).
+
+* For multiclass tasks, multiple output neurons are used.
+  - Their result is passed to a softmax layer which returns a probability for each output.
+
+* For multilabel tasks, multiple independent neurons are used.
+  - Each neuron has its own sigmoid activation function.
+  - For example, classifying whether an email is ham or spam and if it's urgent or non-urgent.
+
+* The loss function for classification function is cross-entropy.
+  - For binary classification:
+  ```js
+  ce = −(1/N) * ∑ (y_i * log(p_i) + (1−y_i) * log(1−p_i)) for i=1 to N
+  ```
   
+  - For multiclass classification:
+  ```js
+  ce = -∑∑ y_ij * log(p_ij) for i=1 to N and j=1 to C
+  ```
+  * Inner sum is over the number of classes j=1 to C
+  * Outer sum is over the number of instances i=1 to N
+  * y_ij equals 1 if class j is the correct class for instance i, 0 otherwise
+  * p_ij is the probability that instance i belongs to class j
+  * Notice how this function works:
+    - If the model predicted perfectly, an example will have p_ij = 1 and y_ij = 1 and the product will be 1
+    - If the model outputted a false positive p_ij = 1 and y_ij = 0 and the product will be 0
+      * False negative is also a product of 0
+    - A correct answer results in a higher product value (the more confidence, the higher the product). A wrong answer
+      returns a product of 0. The sum will increase if the model is correct and the end result is multiplied by -1.
+    - In summary, correct answers reduce the loss to a negative result.
+
