@@ -91,3 +91,18 @@ Compiling and fitting the Keras Model
 * If you look at the results and notice that more training is required, you can simply call fit again.
   - Keras will continue where it left off, not from the beginning.
 
+Keras Functional API
+--------------------
+* We've seen the Sequential NN architecture that Keras offers. Using the functional API we can build NNs with more
+  complex architectures.
+
+* One such example is the `wide and deep` network architecture. In it, the input layer is connected to the sequential
+  network (hidden layer 1 then 2, etc...) as we've seen before.
+  - It also connects the input layer directly to the output layer.
+  - This allows the network to learn non-linear complex patterns (the deep part) and also simple patterns (the direct
+    part).
+  - Simple patterns sometimes get diluted and distorted when passed thru the network.
+
+
+
+
