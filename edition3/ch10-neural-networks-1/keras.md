@@ -103,6 +103,16 @@ Keras Functional API
     part).
   - Simple patterns sometimes get diluted and distorted when passed thru the network.
 
+* One of the examples is a NN with two inputs, one thru the deep path and another thru the wide path.
+  - For the example, we split the data vertically - columns 0-4 go thru the wide portion and columns 2-7 thru the deep portion.
+
+* Another common NN architecture is multioutput. Using it we can solve tasks such as:
+  - Locating an object on an image (regression) and classifying it.
+  - Learning multiple independent tasks from the same data. For example, classifying a person, outputting if they are smiling
+    and what they are wearing. 
+    * This can perform better than a single network per task because the NN can learn features in the data that are 
+      useful across tasks.
+
 
 
 
