@@ -1,3 +1,7 @@
 ch3-classification/datasets
 
 projects/**/data/
+
+ch10-neural-networks-1/my_keras_model
+ch10-neural-networks-1/*checkpoint*
+ch10-neural-networks-1/tensorboard_logs
