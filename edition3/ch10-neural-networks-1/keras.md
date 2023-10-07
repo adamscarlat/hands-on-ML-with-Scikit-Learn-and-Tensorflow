@@ -113,6 +113,67 @@ Keras Functional API
     * This can perform better than a single network per task because the NN can learn features in the data that are 
       useful across tasks.
 
+Fine-Tuning Neural Network Hyperparameters
+-------------------------------------------
+* NNs have many hyperparameters that we can change:
+  - Number of layers
+  - Number of neurons in each layer
+  - Type of activation function (per layer)
+  - Weight init logic
+  - Type of loss function
+  - Learning rate
+  - Batch size
+  - and more...
 
+* Keras has a built in library for hyperparameter tuning of NNs called `keras tuner`.
+  - To use it, we build a function which builds and compiles a model only with dedicated keras range objects
+    for the hyper parameters we want to tweak.
+  - The function returns a model.
 
+General Guidelines for choosing NN hyperparameters
+---------------------------------------------------
+* Number of hidden layers
+  - Theoretically, a single hidden layer with enough neurons can achieve the same results as multiple hidden layers.
+  - Multiple hidden layers however, offer a much faster training with the same amount of data.
+    * By having multiple hidden layers, we allow the model to distribute its knowledge across these layers, letting
+      each layer learn gradually more complex patterns.
+    * Lower layers learn basic structure about the data (e.g. lines incase of images) and higher layers learn more
+      complex structures (e.g. faces)
+    * By distributing the knowledge, each layer has to do less and can rely on previous layers to learn more basic
+      structures. The most basic structures learned in the lower layer do not change as much.
+  - Simple problems (low res images for example), can do fine with 1-2 hidden layers. More complex problems require
+    dozens or hundreds of hidden layers and a lot of data.
+    * It's much better to do transfer learning and utilize the lower layers of an already trained model.
+
+* Number of neurons per layer
+  - Input and output layers number of neurons depend on the problem always
+    * For example, the MNIST task requires 28x28=784 input neurons and 10 output neurons for the classes.
+  - A good approach to choosing the number of neurons (and the number of layers) is to use a model with more than
+    you need and using regularization techniques and early stopping to prevent overfitting.
+  - In general, it's preferable to increase number of layers rather than number of neurons.
+
+* Learning rate
+  - It's best to gradually increase learning rate and increasing it every iteration (e.g. 10e-5 to 10).
+  - Then we monitor the loss with respect to the learning rate and find the learning rate value right before 
+    the loss starts increasing.
+
+* Optimizer
+  - Discussed more in chapter 11
+
+* Batch size
+  - Can significant impact on the performance and training time.
+  - Smaller batch sizes (2-32) are preferable.
+  - There is a technique where we start with a large batch size (8192) and low learning rate and slowly ramping
+    up the learning rate.
+  - In general
+    * Higher batch size means more stable weight updates so we can use a higher learning rate.
+    * Lower batch size means more stochastic weight updates so we can use a lower learning rate.
+
+* Activation function
+  - ReLU is a solid choice for hidden layers.
+  - For output layer, it depends on the task (see above)
+
+* Number of iterations
+  - No need to tweak it. Choose a high number and use early stopping.
+  
 
