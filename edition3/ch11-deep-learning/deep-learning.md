@@ -34,6 +34,20 @@ Vanishing and Exploding Gradients Problems
     of lower layers. Because we're multiplying values below 1, the gradient continues to shrink as the signal
     moves down the network.
 
+Faster convergence during training
+----------------------------------
+* Below are methods to speed up training convergence. This is done by handling vanishing/exploding gradients
+  (speed up is a side effect of it) and by applying different techniques:
+  - Smart weight initialization
+  - Using better activation functions
+  - Batch normalization
+  - Gradient clipping
+  - Transfer learning
+  - Unsupervised pre-training
+  - Faster gradient descent optimizers
+
+* Below are details about each of these techniques.
+
 Weights Initialization techniques - fighting the vanishing gradient
 -------------------------------------------------------------------
 * The idea is to reduce the variance between input and output layers across the network.
@@ -149,14 +163,17 @@ Batch Normalization
   u_b = [(1+4+4)/3, (2+5+8)/3, (3+6+9)/3] = [3,5,6]
   std_b = [(1-3)^2 + (4-3)^2 + (4-3)^2, (2-5)^2 + (5-5)^2 + (8-5)^2, (3-6)^2 + (6-6)^2 + (9-6)^2]
         = [6/3,18/3,18/3] = [2,6,6]
-  
-  // Normalize each input feature using mean and std (not shown...). After this the normalized batch has a 
-  // mean of zero and std of 1. 
-
-  // Scale and shift each input feature (not shown...). In reality, not all data follows a normal distribution.
-  // If we let the network scale and shift the batch as needed, it'll learn the correct distribution of the 
-  // data. In other words, we leave flexibility using learned parameters to learn the data properly
   ```
+  - Normalize each input feature using mean and std (not shown...). After this the normalized batch has a 
+    mean of zero and std of 1. 
+  - Scale and shift each input feature (not shown...). In reality, not all data follows a normal distribution.
+    If we let the network scale and shift the batch as needed, it'll learn the correct distribution of the 
+    data. In other words, we leave flexibility using learned parameters to learn the data properly.
+  
+* How many new learnable parameters do we add when using BN?
+    - Assume a single layer which takes as input a (m,n) matrix.
+    - Each one of the n features will require a mean and std (not really learned, but still new params), scale 
+      and shift. `Therefore n * 4 new parameters per layer`.
 
 * What about batch normalization during inference?
   - During inference we probably won't have enough instances to compute all those values. Using less instances
@@ -164,18 +181,209 @@ Batch Normalization
   - To solve this, the BN algorithm uses the values learned during training for new examples during inference.
   
 * Batch normalization helps in MANY areas of DNN:
-  - It solves the vanishing/exploding gradient problem throughout training.
-  - It solves the need to use sophisticated weight initialization techniques (for vanishing gradients)
-  - It even allows using the tanh and sigmoid activations without vanishing gradients
-  - It speeds up training (convergence on an optimal solution)
-  - It adds regularization and reduces overfitting
-  - If added to the first input layer, it reduces the need to normalize inputs
+  - Solves the vanishing/exploding gradient problem throughout training.
+  - Solves the need to use sophisticated weight initialization techniques (for vanishing gradients)
+  - Even allows using the tanh and sigmoid activations without vanishing gradients
+  - Speeds up training (convergence on an optimal solution)
+  - Adds regularization and reduces overfitting
+  - Added to the first input layer, it reduces the need to normalize inputs
 
 * Batch normalization makes each epoch longer (since there more computations) but you'd need less epochs.
   - All in all, it's still faster with BN than without.
 
 
+Gradient Clipping
+------------------
+* A technique used mostly in RNNs, where BN is tricky. It clips the gradients during backpropagation so that
+  they never exceed some threshold.
+
+* For example, we can choose to clip gradients to never be outside of the range [-1,1].
+  - Note that it can change a gradient vector's direction. For example, [0.9, 100] is a vector that points
+    much more in the second axis direction.
+  - After clipping it, it becomes [0.9, 1], which is almost diagonal.
+
+* To not lose the direction of the gradient, we can clip the normalized gradient such that its direction is
+  preserved:
+  - For example, [0.9, 100]:
+    * [0.9 / (100.09), 100 / 100.09] = [0.0089, 0.9999]
+
+* Preserving the gradient's direction is not guaranteed to generate better results. You'll need to explore
+  both options.
+
+Reusing pre-trained layers
+--------------------------
+* We can reuse the lower layers of an existing DNN to avoid training a large DNN from scratch in a process called
+  transfer learning.
+
+* When we do transfer learning: 
+  - We take a trained DNN
+  - Remove the top layers
+  - Freeze the layers that are left, meaning their parameters won't change when we reuse this DNN
+  - Add new top layers 
+  - Retrain the DNN for a new task
+
+* For example, assume that we want to build a DNN to classify car types.
+  - We can find a trained DNN that was used for classifying different objects (e.g. cars, people, trees, etc.)
+  - We remove the top layers and freeze a stack of its lower layers.
+  - We add new top layers, including an output layer with the correct number of output neurons (e.g. number
+    of car types we're trying to classify)
+  - We retrain the network using a labeled dataset of cars and their model
+
+* Transfer learning works best if your input has the same shape as the original network's input.
+  - If it doesn't, you'd need to preprocess the DNN's input to match.
+
+* How many top layers should I remove for my new task?
+  - Output layer is probably a for sure remove (you label something different than what the original DNN was 
+    labeling).
+  - The closer the task is to the original DNN's task, you should remove less top layers.
+  - The more training data you have, the more top layers you can unfreeze.
+  - You'd want to use a low learning rate with the original DNNs top layers to not wreck their fine-tuned weights.
+    In other words, since they are already trained and fine-tuned, you want to be gentle in how much you change 
+    them.
+  - If you can't get good performance:
+    * If you have a lot of training data, replace the top layers with new ones and/or add new hidden layers.
+    * If you don't have a lot of training data, remove the top hidden layers and unfreeze new top layers, 
+      essentially, simplifying the DNN.
+
+Unsupervised Pretraining (using GANs and auto-encoders)
+-------------------------------------------------------
+* Suppose that you can't find a good base model for transfer learning and you don't have a lot of labeled data. You 
+  can still manage to train a model using this technique.
+
+* Assume that you have a lot of unlabeled samples and a little of labeled samples:
+  - Take an unsupervised model such as a GAN or an auto-encoder.
+  - Train the unlabeled and labeled data using this unsupervised model. 
+    * For example, an auto-encoder task can be to learn how to compress the data to a lower dimension and 
+      then reconstructing it to the original form.
+  - Take the lower layers of these unsupervised models after fitting and use them as the lower layers in a 
+    new model. 
+  - Add the output layer for your task on top. This will be a supervised learning task.
+  - Train the network using whatever labeled examples that you have.
+
+* The idea is because we have very little labeled data and much more unlabeled data, we can't use a supervised
+  learning task.
+  - However, we can still utilize the unlabeled data to learn from. The unsupervised model's layers pick up
+    representations of the data that can be used later in the supervised model.
+
+
+Pretraining on an auxillary task
+--------------------------------
+* Another useful technique for when we don't have much labeled data.
+
+* We train a model on a task that's similar to the one we want to train a model for and reuse the layers of this
+  model for our task.
+
+* Example 1: face recognition
+  - Suppose that you want to train a model for face detection. You have only a few images of your employees faces,
+    not enough to train a model to recognize them.
+  - Instead, take a face dataset from online (of random faces). Train a model to detect if two faces are the same 
+    in this dataset (this model requires two inputs).
+  - Reuse this models lower layers and retrain on the few images that you have.
+
+Faster Optimizers
+----------------- 
+* We've seen a single way to do gradient descent (weight updates with a learning rate). There are different ways that 
+  are more involved that can lead to better results.
+
+* Momentum
+  - Regular gradient descent updates the weights according to the learning rate and the slope of the gradient at 
+    a given point.
+    * It does not take into account the previous gradients.
+  - Momentum optimization cares about previous gradients when updating the current ones. This gives it the effect
+    of a momentum - like a balling ball rolling down a hill picking up speed (accelerating).
+  - It subtracts the local gradient from the momentum vector m and uses m to update the weights:
+    ```js
+    m_1 = b * m_0 - step * grad
+    weights = weights + m_1
+    ```
+  - Why is it a faster optimizer?
+    * Consider a situation where the algorithm reached a plateau, an area where the gradient is constant.
+    * Using the regular GD optimizer, we'd deduct the weight updates directly from the weights:
+      ```js
+      w1 = w0 - step * grad
+      ```
+    * The weight updates will get reduced significantly and eventually will stop changing (if the GD does not
+      escape the plateau).
+    * With the momentum approach, we have vector m which absorbs the weight update. It contains sort of a memory
+      to the previous updates in that vector. This means that if our previous point was a steep part of a curve,
+      its momentum is captured in vector m which affects it when it gets to the plateau.
+  - In summary, momentum can help the optimizer to escape local minima.
+    * It's great for deep NN where the values in the lower layers of the network are vastly different than the 
+      ones in later layers.
+    * One drawback of using momentum is that it introduces another hyperparameter (b, see above). A good value
+      for it is 0.9.
+
+* Nesterov accelerated gradient
+  - This is a tweak to the momentum optimizer. Instead of taking the gradient at the point of the weights, we 
+    take it at the points of the direction of the momentum:
+    ```js
+    m_1 = b * m_0 - step * grad(weights_0 + b * m_0)
+    ```
+    * Adding b*m_0 to the weights changes their direction in the direction of the momentum, which always 
+      points towards the minimum.
+  - Using this tweak, we can reach convergence much faster.
+
+* AdaGrad
+  - Corrects the direction of the gradient towards the global optimum:
+  ```js
+  s_1 = s_0 + grad(weights_0) x grad(weights_0)
+  weights_1 = weights_0 - step * grad(weights_0) / sqrt(s_1 + eps)
+  ```
+  - `grad(weights_0) x grad(weights_0)` - element wise multiplication which is basically the square of the gradients.
+    * This has the effect of amplifying partial derivatives that are steeper. For example, if the gradient is steep
+      along the ith dimension, this steepness will get emphasized more than other dimensions due to the square.
+  - The second step is almost like regular gradient descent only that the weights are scaled down by a factor of
+    `sqrt(s + eps)`.
+  - AdaGrad pushes the gradient more at the direction of its steepest weights. It leads to the function not taking
+    into account partial derivatives that make the gradient lose focus.
+  - **DO NOT USE** AdaGrad for deep networks. It stops before the global optimum is reached due to the scaling down of
+    the weight updates and the learning rate.
+
+* RMSProp
+  - Tweak to the AdaGrad optimizer. Instead of using all the gradients since the beginning of training, it considers
+    only the ones from recent iterations.
+  - This prevents the optimizer from slowing down before reaching global optimum:
+  ```js
+  s_1 = p * s_0 + (1 - p) * grad(weights_0) x grad(weights_0)
+  weights_1 = weights_0 - step * grad(weights_0) / sqrt(s_1 + eps)
+  ```
+  - It uses the decay rate p, which reduces the amplification
+  - Outperforms AdaGrad almost always.
+
+* Adam
+  - Adaptive Moment Estimation
+  - Combines the ideas of all optimizers shown above (combines momentum and RMSProp):
+  ```js
+  m_1 = b1 * m_0 - (1 - b1) * grad(weights_0)
+  s_1 = b2 * s_0 + (1 - b2) * grad(weights_0) x grad(weights_0)
+  m_hat = m_1 / (1 - b1 ^ t)
+  s_hat = s_1 / (1 - b2 ^ t)
+  weights_1 = weights_0 + step * m_hat / sqrt(s_hat + eps)
+  ```
+  - `t` represents the iteration number
 
 
 
+Learning Rate Schedules
+-----------------------
+* Setting the learning rate too high and we'll overshoot the global minima, setting it too low and the algorithm
+  won't converge.
 
+* To find the optimal learning rate, we can plot a learning curve:
+  - We choose a number of increasing learning rates
+  - For each one, we train the model and record the loss per epoch
+  - We plot the different learning rates and choose the best one 
+
+* One thing that was noticed is that the learning rate can be high in the beginning and then reduced. This gets the
+  benefit of both approaches - faster convergence and hitting the global minima.
+
+* There are different strategies (called learning rate schedules) to tweak the learning rate during training:
+  - Power scheduling 
+    * Learning rate decreases as a function of the iteration
+  - Exponential scheduling
+    * Learning drops by a factor of 10 every s steps
+  - Piecewise constant scheduling
+    * Reducing the learning rate by a set amount after a set number of epochs
+  - Performance scheduling
+    * Reduce the learning rate by a factor whe th error on the validation set stops dropping
+  - 
