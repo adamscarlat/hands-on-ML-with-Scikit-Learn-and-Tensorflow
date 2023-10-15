@@ -385,5 +385,87 @@ Learning Rate Schedules
   - Piecewise constant scheduling
     * Reducing the learning rate by a set amount after a set number of epochs
   - Performance scheduling
-    * Reduce the learning rate by a factor whe th error on the validation set stops dropping
-  - 
+    * Reduce the learning rate by a factor when the error on the validation set stops dropping
+
+Regularization
+--------------
+* Deep neural networks have sometimes millions of parameters. This gives them a very large degree of freedom to fit
+  complex datasets. However, it also makes them prone to overfitting.
+
+* We already saw two very good techniques that regularize a NN:
+  - Early stopping
+  - Batch normalization (regularization here is a positive side effect)
+
+* l1 and l2 regularization:
+  - These work in the same way they work in other models.
+  - l2 can constrain the network weights and work best in cases where there are correlated features.
+    * l2 regularization is not a good match for the Adam optimizer. This optimizer already has weight decay
+      and adding this regularizer can cause "over regularization".
+    * l2 works with the momentum and nestrov optimizer.
+  - l1 can remove (make 0) weights for features that are not important and is good for sparse datasets.
+
+* Dropout
+  - At each training step (not epoch, but for every batch iteration), every neuron (including input neurons
+    but excluding output neurons), has probability p of being temporarily "turned off".
+    * The turned off neuron is ignored during this step. `It outputs 0.`
+    * It can come back alive in next step.
+  - p is called the `dropout rate`
+    * It's typically set to 20-30% in RNNs and to 40-50% in CNNs
+  - Dropping neurons out only happens during training
+  - This works because the learning "spreads" across the layer
+    * In every layers, you have neurons that are more active than others. Their weight updates are larger.
+    * If they get turned off, there is no choice but for other neurons to adapt.
+  - Another way to understand why dropout works:
+    * Since at every step we turn off neurons randomly, we essentially train 2^N different networks, where N
+      is the total number of droppable neurons (power has base 2 since a sampled neuron can either be a part 
+      of the network or not).
+    * What happens is that we get an ensemble of different networks where the result is an average of all those
+      networks.
+  - In practice, you'd want to apply dropout to neurons in the top 3 layers (excluding output layer of course).
+  - During testing and inference we need to adjust because of dropout. To understand why:
+    * Assume we have a p=0.75. This means that on average 25% of the neurons are active during training.
+    * Once we're done training, we remove dropout and now each neuron is connected to x4 neurons (during training
+      this neurons were dead so that neuron wasn't considered connected to them).
+    * What happens is that input neuron's activation is training on a "diluted" function of the weights. During
+      testing, we reactivate all neurons and the input neurons start receiving activations that are much larger
+      than what they were trained on - this is called `activation mismatch`.
+    * To fix it, we need to scale the activations down by a factor of (1-p). For example, with a p=0.75, we 
+      scale the weights down by a factor of 1-0.75 = 0.25 during test.
+      - Another way to achieve the same thing is by scaling the dropped out weights up during training by dividing
+        them by the keep probability. Then during test we don't need to do anything (how keras does it).
+
+  - When using dropout, comparing the training and validation loss during training can be misleading.
+    * Dropout is only applied to the training set, which can make the validation loss of the training worse
+      or equal to the validation loss (where no dropout is applied).
+    * This can give the impression that the model has a training loss equal to the validation loss where in 
+      reality, if we removed dropout, we'd see that the training loss is much lower, hence the model is 
+      overfitting.
+    * To get a better picture, evaluate the model after training on the training set (without dropout) and 
+      compare the loss to the validation set. 
+      - If you see overfitting then, increase the dropout rate and retrain
+      - If you see underfitting then, reduce the dropout rate and retarin
+
+
+Summary and Practical Guidelines
+--------------------------------
+* With so many different initial weights, optimizers and regularization techniques which ones do we choose?
+
+* The following is a best practice configuration that seems to work with most networks:
+  - Kernel initializer: 
+    * He initialization
+  - Activation function:
+    * ReLU for shallow
+    * Swish for deep
+  - Normalization:
+    * None for shallow
+    * Batch norm for deep
+  - Regularization:
+    * Early stopping
+    * Weight decay (l2)
+    * Dropout
+  - Optimizer
+    * Nesterov
+    * AdamW
+  - Learning rate schedule
+    * Performance scheduling
+
