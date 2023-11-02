@@ -15,26 +15,26 @@ Recurrent Neurons and Layers
   - Recurrent neurons have a connections forward (regular) and another connections pointing backward.
 
 * Each recurrent neuron at time t takes two inputs:
-  - x_t: the input at time t
-  - y_t-1: the output of the neuron from the previous time step
+  - x(t): the input at time t
+  - y(t-1): the output of the neuron from the previous time step
 
 * Keep in mind that both inputs are vectors when we consider an entire layer of recurrent neurons.
   - This means that for each layer we have two weight matrices: `W_x` and `W_y`
-  - We can represent the entire input into the layer as `X_t` and `Y_t-1`
+  - We can represent the entire input into the layer as `x(t)` and `y(t-1)`
   - We can represent the output of a recurrent layer with the following equation:
   ```js
-  Y_t = ReLU(X_t @ W_x + Y_t-1 @ W_y + b) 
+  y(t) = ReLU(x(t) @ W_x + y(t-1) @ W_y + b) 
   ```
   - ReLU is just one option for an activation function. It can be any.
-  - `Y_t` is an `m x n` matrix containing the layer's output at time step t for each instance in the
+  - `y(t)` is an `m x n` matrix containing the layer's output at time step t for each instance in the
     mini-batch (m).
 
 * Note the recurrence relation in that equation:
-  - Y_t is a function of X_t and Y_t-1
-  - Y_t-1 is a function of X_t-1 and Y_t-2
-  - Y_t-2 is a function of X_t-2 and Y_t-3
+  - y(t) is a function of x(t) and y(t-1)
+  - y(t-1) is a function of x(t-1) and y(t-2)
+  - y(t-2) is a function of x(t-2) and y(t-3)
     * and so on...
-  - This makes Y_t a function of all inputs since time t=0 (X_0, X_1, ... , X_t)
+  - This makes y(t) a function of all inputs since time t=0 (X_0, X_1, ... , x(t))
 
 Memory Cells
 ------------
@@ -122,15 +122,15 @@ WHEN WE LOOK AT AN RNN UNROLLED THROUGH TIME, EACH TIME STEP IS AN ENTIRE FORWAR
     * For example, in a seq to seq RNN, the loss function takes into account all outputs from previous time steps
       and compares them to all actual values (the sequence tokens):
       ```js
-      loss(y_0, y_1, ..., y_t ; y_hat_0, y_hat_1, ..., y_hat_t)
+      loss(y_0, y_1, ..., y(t) ; y_hat_0, y_hat_1, ..., y_hat_t)
       ```
     * With a seq to vector network only the last output is of interest:
       ```js
-      loss(y_t, y_hat_t)
+      loss(y(t), y_hat_t)
       ```
   - Usually we define the `unroll length` which is how many previous states do we want to take into account in
     the loss function. For example, we can consider only the past 3:
-      loss(y_t-2, y_t-1, y_t ; y_hat_t-2, y_hat_t-1, y_hat_t )
+      loss(y(t-2), y(t-1), y(t) ; y_hat_t-2, y_hat_t-1, y_hat_t )
 
   - The gradients of the loss function are then propagated backwards through the network. In the last example above,
     only the last 3 outputs affect the gradient calculations.
@@ -138,10 +138,38 @@ WHEN WE LOOK AT AN RNN UNROLLED THROUGH TIME, EACH TIME STEP IS AN ENTIRE FORWAR
       seeing it over multiple time steps, each with a different input and a different hidden state.
     * At the end of each input sequence we compute the loss and gradients.
     * We update the weights at the end of the batch but there will be multiple gradient updates per sequence.
-      - We need to compute the gradients 3 times - one for each output (y_t-2, y_t-1, y_t)
+      - We need to compute the gradients 3 times - one for each output (y(t-2), y(t-1), y(t))
       - Then we sum them up (that's our gradient update) for the input sequence
       - We continue processing input sequences in the batch
       - At the end of the batch we update our weights
+
+Stacking RNN cells into a layer
+-------------------------------
+* All the examples above discuss a single RNN cell but we can also build a stacked layer of multiple RNNs (units).
+
+* In this case, each one of the RNN cells receive the input and produce an output and a hidden state.
+  - For example, assume an RNN layer with 32 units (`tf.keras.layers.SimpleRNN(32, input_shape=[None, 1])`)
+  - At time step x(0), each one of the 32 units receives the input and h(0) - the initial hidden state. 
+  - Each one of the units is its own RNN cell with weights. Each one produces an output
+  - At time step x(1), the input is passed to each one of the 32 units along with each unit's previous hidden state.
+
+* Adding more units into an RNN layer increases it's memory and ability to learn.
+
+* Computations in a single RNN layer can be done in parallel.
+
+* To condense the output of an RNN layer, we can use a dense layer with the desired size.
+
+Stacking RNNs layers into a network
+-----------------------------------
+* Further extending the RNN network, we can stack these multi unit layers on top of each other.
+
+* In this case (continuing the example above), the 32 hidden states of the first RNN layer are passed as inputs
+  to the next RNN layer (in the same time step).
+  - In the next time step, we use the result of the respective layer as hidden state.
+  - Results of RNN layer n from step 0, are passed to RNN layer n in step 1.
+
+* Adding more RNN layers allows the model learn hierarchical representations of the data.
+  - Similar to CNNs, the lower layers pick up on simpler patterns while the higher layers build on them.
 
 Time Series Forecasting
 -----------------------
@@ -209,4 +237,50 @@ Preparing Data for ML Models
 * We'll start by using 8 week (56 day) windows for training. This means sliding a 56 day window over the data, taking 
   55 steps for training and the last, 1 value as a label.
 
-* 
+Using an RNN cell to predict a sequence
+----------------------------------------
+* Given an RNN cell as part of a larger network, we can predict the next step in a sequence of elements.
+
+* The Keras SimpleRNN cell works by processing an entire input sequence, step by step before moving to the 
+  next layer of the network.
+  - Assume that we're using a 2 layer network (RNN, Dense) and had input sequences of 10 time steps each. For each input 
+    sequence, the RNN cell processes it step by step (x(0) to x(9)). Only when it's done, it passes the result to the next layer (Dense).
+  - If the RNN cell's `return_sequences=False` (default), then it'll return only the last time step result (y_hat(9)). 
+    If `return_sequences=True`, then it'll return the results of all time steps (y_hat(0) to y_hat(9)).
+
+* The bottom line, an RNN cell has to process an entire sequence step by step. The output of the cell can be 
+  the entire sequence of outputs or a vector (see all 4 types above).
+
+* Notice that the SimpleRNN cell can also be a layer if we specify units > 1. In this case, we'll have n cells
+  working on the input sequence concurrently (each RNN cell processing 1 step at a time and the n cells work 
+  concurrently).
+  - At the end, either each RNN cell in the layer outputs the whole sequence or the last step. 
+  - Using multiple RNN cells in a layer increases the degrees of freedom that the network has.
+
+Forecasting Multiple Time Steps Using RNN
+-----------------------------------------
+* If we want to forecast more than just the next time step (for example, the next 14), we have 2 options:
+  - Using a single time step forecast trained model
+    * We use the model to predict the next time step, add it to the input and predict the next. We repeat this
+      14 times to get the next 14 time steps.
+    * The problem with this approach - if there is an error in the first predictions, it'll carry to the next 
+      ones as well. Therefore, this can only be used for a small number of steps.
+
+  - Using an RNN that can compute the next 14 values in one shot. It's still a `sequence to vector` model, but one
+    that outputs a 14 element vector instead of 1.
+    * To do this, we need to prep the data accordingly. We need to change the targets to be vectors containing
+      the next 14 values (see notebook).
+
+
+Forecasting Multiple Time Steps Using a Sequence-to-Sequence Model
+------------------------------------------------------------------
+* The RNN approach above to forecast multiple time steps at once used a sequence to vector model. It mapped the 
+  hidden outputs of each of the 32 RNN cells into a 14 item vector which represented the result.
+
+* Instead, we can train the model to forecast the next 14 values at each and every time step. This will work as follows:
+  - At time step 0, the model will output a vector containing steps 1 to 14.
+  - At time step 1, the model will output a vector containing steps 2 to 15.
+  - And so on.
+
+* As we can see, the targets are sequences of consecutive windows, shifted by 1 time step at each time step.
+  - This means that each input sequence needs to have a sequence of windows as output.
