@@ -13,3 +13,4 @@ ch13-data-processing/datasets
 ch13-data-processing/my_pet_classifier
 ch15-sequences/models_cp
 ch16-nlp/models
+ch16-nlp/my_tfhub_cache
