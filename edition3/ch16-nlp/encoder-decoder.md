@@ -94,3 +94,35 @@ Beam Search
 
 * Notice the crucial part - even tho the next probable word after "me" was "gustan" that was incorrect, we managed to 
   course correct by having parallel generated sequences and computing the conditional probabilities.
+
+Attention
+---------
+* In our encoder-decoder model, if we try to translate long sequences, we'll start seeing it breaking down.
+  - The encoder's RNN based cells unrolls an entire sequence into a single context vector that is then passed to the
+    decoder.
+  - Words that are inputted early on are forgotten. For example, "dont eat the delicious looking and smelling pizza".
+    In this sentence, if the word "don't" is forgotten, the entire sentence loses its meaning.
+
+* Currently we're sending a single context vector from the encoder to the decoder. This context vector is the final
+  hidden state of the encoder. 
+  - The main idea of attention, is to send a context vector to the decoder at each step of the sequence. Each step in
+    the coder would have direct access to the step outputs from the encoder.
+  - In the example sentence above, we'd send the output of the RNN cell to the decoderat: dont, dont eat, 
+    dont eat the, dont eat the delicious, etc...
+  - These outputs are sent to the decoder.
+  - This is the attention - the decoder places attention on the relevant word at each timestep.
+
+* To set the hidden steps of the encoder as inputs to the decoder steps:
+  - We take output step i from the encoder and do a similarity score (cosine) to the output of step i from the 
+    decoder.
+    * For example, Let's go => vamanos
+    * "Let's" is embedded and passed thru the encoder at step 1. It's compared to the "SOS" token after it passed 
+      thru the decoder
+    * Then similarity with "go" and the SOS token
+  - Now we use the similarity scores to scale the results of the softmax function. 
+  
+* In Keras, we can simply add an attention layer after we define the decoder outputs. We pass to it the encoder outputs
+  and the decoder outputs. Then we connect to it the final, softmax, Dense layer.
+  - Since this layer needs to match encoder steps with decoder steps, we need to make sure that our encoder outputs
+    all time steps (return_sequences=True)
+

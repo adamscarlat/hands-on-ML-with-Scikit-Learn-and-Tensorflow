@@ -51,6 +51,8 @@ Tackling the Short-Term Memory Problem
 LSTM Cells
 ----------
 * Long Short Term Memory (LSTM) is a specialized RNN cell that can handle the long term memory loss.
+  - In contrast to the RNN cell, which has a single path for past memories, the LSTM cell has two paths,
+    one for short term memories and one for long term.
 
 * The anatomy of an LSTM cell:
   - Inputs:
@@ -112,7 +114,10 @@ LSTM Cells
     ```js
     h(t), y_hat(t) = tanh(c(t)) x o(t)
     ```
-      
+
+* Notice that every time we take the sigmoid and multiply, we regularize how much memory (short or long, depending on the 
+  gate) we want to keep.
+
 * What in the heck?
   - Since each ones of these gates has its own set of weights, each gate can get specialized in a different task 
     during training. For example, the input gate can recognize which input should be stored in long term memory.

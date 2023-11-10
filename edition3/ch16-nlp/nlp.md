@@ -113,7 +113,3 @@ Using pre-trained embedded layers
   - These pretrained LLM parts take into account context and embeddings.
   - See example of adding the universal sentence encoder into our model as a layer.
 
-
-
-Attention
----------
