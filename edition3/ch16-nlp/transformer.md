@@ -2,6 +2,7 @@ Transformers
 ------------
 * Sources:
   - StatQuest: https://www.youtube.com/watch?v=zxQyTK8quyY&t=11s
+  - AI Hacker: https://www.youtube.com/watch?v=4Bdc55j80l8
 
 * Transformers are built on top of the concept of encoder-decoders with attention
   - Unlike the encoder-decoders we've seen, this NN architecture does not use any RNN cells. 
@@ -29,10 +30,13 @@ Details
 -------
 * We start with word embeddings for our vocabulary, same as with the encoder-decoders.
 
-
 * Now we add an `embedding position` sequence to each embedding
   - It's unique for each word embedding. We add it to the embedded vector.
   - It helps the transformer keep track of word order.
+  - We didn't need to use this when we used RNNs in the encoder-decoder since the RNNs were processed sequentially
+    and every steps output was passed as input to the next one. With transformers, we don't use RNNs and often 
+    parallelize the training. Therefore, we need a way to maintain the positional information of the input sequence
+    elements.
   - This is a vector that represents the position of a word in the sequence. Think of this vector as a position
     identifier of words in sequences. For example:
     * "Squatch eats pizza"
@@ -42,6 +46,9 @@ Details
       the word pizza is third, so we add a positional vector for the third index. In the second sentence the 
       position is first, so we add a positional vector for the first index. This makes the embedded vector change
       according to the position of the word in the sentence.
+  - We use a variation of the sine and cosine functions to introduce positional vectors. These vectors save positional
+    information that is absolute (e.g token "pizza" is 3 spaces from the beginning) and relative (e.g token pizza is 
+    1 space from "eats").
 
 * Another concept introduced in transformers is `self-attention`
   - This is a mechanism that creates similarity scores for all pairs of words in a sentence.
@@ -62,7 +69,7 @@ Details
     * We take each of the scalar results and run it through a softmax function. This normalizes the scalar results. Now
       they are values between 0-1, representing the probabilities that each word is closer to its paired word.
     * We take the probability vector produced by the softmax function and multiply it by the positionally embedded vector
-      of the word "lets".
+      of the word "lets". These are considered the `values`
       - This part scales the positionally embedded vector with its similarity to other words in the sequence.
     * This new vector has a lot more information in it now:
       - First, it's an embedded vector, representing a word in a geometric, high-dimensional space.
