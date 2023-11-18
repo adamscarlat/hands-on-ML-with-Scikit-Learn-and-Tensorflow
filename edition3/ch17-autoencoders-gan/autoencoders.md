@@ -80,3 +80,35 @@ Convolutional Autoencoders
 * The decoder, unlike a regular CNN, does the reverse - it upscales the image and reduces the depth back
   to the original dimension.
   - To do this, it uses transpose convolutional layers or upsampling layers with conv layers.
+
+Denoising Autoencoders
+----------------------
+* Another applications of autoencoders is to denoise inputs.
+
+* We artificially add noise to inputs during training and the AE tries to reconstruct the original input that's noiseless.
+
+* We can implement it by taking a regular, stacked autoencoder
+ and add to it a Dropout layer or a GaussianNoise layer.
+ - The idea is that the inputs are normal, the noise gets added by the encoder and the decoder tries to reconstruct the image without the noise.
+ - The dropout layer makes learning the original input more difficult and is supposed to emulate noise by way of regularization.
+ - See the example in the notebook when a dropout layer is applied to the MNIST images.
+
+
+Variational Autoencoders
+------------------------
+* Generative autoencoders - they can generate new instances that look like they were sampled from the training data.
+  - Unlike the other AEs that we saw, the variational AEs outputs are partly determined by chance (probabilistic outputs).
+
+* These AEs follow a similar process to Bayesian inference
+  - They update a known probability distribution (priori) with new data, from Bayes theorem.
+  - The updated distribution is called posterior.
+
+* The encoder of a VAE produces the mean (μ) and standard deviation (σ) of the codings. During training, the model samples from the unit Gaussian 
+  distribution  and uses the reparameterization trick to obtain a sample from the codings distribution using the mean and standard deviation provided by the encoder. The decoder then takes this sample and tries to reconstruct the input using a reconstruction loss.
+  - The VAE is trained to balance the reconstruction loss with a regularization term that encourages the codings to follow a unit Gaussian distribution.
+
+* The variational AE learns how to map vectors sampled from a gaussian distribution back to their original inputs.
+  - The variational AE has a cost function that's a sum of two losses. The first the MSE (same as before). It uses it to map outputs to inputs.
+  - The second is the `latent loss`, that pushes the codings to look like points from a Gaussian distribution (part of the encoder).
+  This loss is the KL divergence between the target distribution and (Gaussian) and the actual distribution of the codings (latent).
+  - The KL divergence measures how much a distribution diverges from another distribution. If we minimize it, we can reduce the divergence and converge the two distributions.
