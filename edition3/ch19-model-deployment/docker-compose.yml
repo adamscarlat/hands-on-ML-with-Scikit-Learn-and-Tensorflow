@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  tensorflow_serving:
+    image: emacski/tensorflow-serving:latest
+    ports:
+      - "8500:8500"
+      - "8501:8501"
+    volumes:
+      - ./my_mnist_model:/models/my_mnist_model
+    environment:
+      - MODEL_NAME=my_mnist_model
+

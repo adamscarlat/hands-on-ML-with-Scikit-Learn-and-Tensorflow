@@ -16,4 +16,4 @@ ch16-nlp/models
 ch16-nlp/logs
 ch16-nlp/my_tfhub_cache
 ch16-nlp/datasets
-
+ch19-model-deployment/my_mnist_model
