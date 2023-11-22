@@ -2,8 +2,21 @@ Setup
 -----
 * Source
   - https://github.com/jeffheaton/t81_558_deep_learning/blob/master/install/tensorflow-install-mac-metal-jan-2023.ipynb
+  -  https://medium.com/@sorenlind/tensorflow-with-gpu-support-on-apple-silicon-mac-with-homebrew-and-without-conda-miniforge-915b2f15425b
 
-# Installation Instructions (Short)
+# GPU Setup for Mac M1/M2 (no conda!)
+
+* Setting up GPU for Mac M1/M2 (without conda):
+  - Source: https://medium.com/@sorenlind/tensorflow-with-gpu-support-on-apple-silicon-mac-with-homebrew-and-without-conda-miniforge-915b2f15425b
+```bash
+brew install hdf5
+pip install tensorflow-macos
+pip install tensorflow-metal
+```
+
+----------------------------------------------------------------------------------------------------------------
+
+# Installation Instructions with Conda :( (Short)
 
 ```bash
 conda env create -f ./setup/tensorflow-apple-metal.yml -n tensorflow
